@@ -1,37 +1,72 @@
-from sklearn.model_selection import train_test_split
+import numpy as np
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score
 import pandas as pd
 
-class AudioKNNClassifier:
-    def __init__(self, n_neighbors=5):
-        self.n_neighbors = n_neighbors
-        self.knn_classifier = KNeighborsClassifier(n_neighbors=n_neighbors)
-        self.scaler = StandardScaler()
 
-    def train(self, X_train, y_train):
-        X_train = self.preprocess_data(X_train)
-        self.knn_classifier.fit(X_train, y_train)
+genres = {
+    'blues':0,
+    'classical':1,
+    'country':2,
+    'disco':3,
+    'hiphop':4,
+    'jazz':5,
+    'metal':6,
+    'pop':7,
+    'reggae':8,
+    'rock':9
+}
+def convertlabel(df):
+    def convert(x):
+        return genres.get(x)
+    df['label'] = df.apply(lambda row: convert(row['label']), axis = 1)
+    return df['label']
 
-    def predict(self, X_test):
-        X_test = self.preprocess_data(X_test)
-        return self.knn_classifier.predict(X_test)
+def preprocess(filename):
+    df = pd.read_csv(filename)
+    X = df.drop(['filename', 'length', 'label'], axis = 1)
 
-# Example usage
-# Assuming your data is loaded into a DataFrame called 'df'
-data = pd.read_csv('./train.csv')
-X = data.drop(['filename', 'length', 'label'], axis = 1)
-y = data['label']
-print(data.head(10), X.head(10), y.head(10))
-# Drop 'filename' and 'label' columns to get the feature matrix X
-# X = df.drop(['filename', 'label'], axis=1)
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    y = convertlabel(df)
+    return X,y
+    
+X,y = preprocess('./train.csv')
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = KNeighborsClassifier(n_neighbors = 2, weights = 'distance', p = 1)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+print(accuracy_score(y_test, y_pred))
+
+# TEST
+
+testdf = pd.read_csv('./test.csv')
+id = testdf['id']
+X_val = testdf.drop(['length', 'id'], axis = 1)
+scaler = StandardScaler()
+
+X_val = scaler.fit_transform(X_val)
 
 
-# Split the dataset into training and testing sets
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+y_val = model.predict(X_val)
+submission = pd.DataFrame({'id': id, 'label' : y_val})
+submission.to_csv('final.csv', index = False)
 
-# Create and train the AudioKNNClassifier
-# audio_knn = AudioKNNClassifier(n_neighbors=5)
-# audio_knn.train(X_train, y_train)
 
+
+
+
+
+
+# y_pred_index = []
+# for i in y_pred:
+#     y_pred_index.append(i)
+# predictions = np.array(y_pred_index)
+# submission_df = pd.DataFrame({'id': id,  'label': predictions})
+# submission_df.to_csv('music_genre_predictions.csv', index=False)
