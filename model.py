@@ -27,8 +27,6 @@ print(data.head(10), X.head(10), y.head(10))
 # Drop 'filename' and 'label' columns to get the feature matrix X
 # X = df.drop(['filename', 'label'], axis=1)
 
-# Extract labels into a separate variable y
-# y = df['label']
 
 # Split the dataset into training and testing sets
 # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -37,5 +35,3 @@ print(data.head(10), X.head(10), y.head(10))
 # audio_knn = AudioKNNClassifier(n_neighbors=5)
 # audio_knn.train(X_train, y_train)
 
-# Make predictions on the test set
-# y_pred = audio_k
